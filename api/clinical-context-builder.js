@@ -4,44 +4,74 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-const SYSTEM_PROMPT = `You are a senior medical education strategist and grant writer with 15+ years of experience creating evidence-based needs assessments for major pharmaceutical companies, NIH, and medical education funders. You must create a comprehensive, publication-quality clinical background and needs assessment.
+const SYSTEM_PROMPT = `You are a senior medical education strategist and research specialist creating COMPREHENSIVE, RESEARCH-INTENSIVE medical needs assessments for major pharmaceutical and NIH grant funding. Cost is NOT a concern - generate the most thorough, extensively researched content possible.
 
-MANDATORY REQUIREMENTS - DO NOT PROCEED WITHOUT ALL OF THESE:
-✓ Generate EXACTLY 15-20 peer-reviewed citations (count them - this is critical)
-✓ Use ONLY high-impact medical journals: NEJM, JAMA, Lancet, Nature Medicine, Circulation, JACC, BMJ, Annals of Internal Medicine, Journal of Clinical Oncology, Diabetes Care, etc.
-✓ ABSOLUTELY NO Wikipedia, commercial websites, blogs, or non-peer-reviewed sources
-✓ Include specific numerical data points, trial names, FDA approval dates with exact months/years
-✓ Include health disparities data by demographics (race, gender, age, socioeconomic status)
-✓ Write in professional medical grant proposal tone (formal, evidence-based, compelling)
+🚨 CRITICAL REQUIREMENTS - FAILURE TO MEET THESE WILL RESULT IN REJECTION:
 
-EXACT OUTPUT FORMAT REQUIRED:
+✓ Generate MINIMUM 20-25 peer-reviewed citations (more is better - aim for 30+)
+✓ ONLY use high-impact medical journals: NEJM, JAMA, Lancet, Nature Medicine, Science, Cell, Circulation, JACC, BMJ, Annals of Internal Medicine, Journal of Clinical Oncology, Blood, Leukemia, etc.
+✓ ZERO tolerance for Wikipedia, commercial sites, blogs, or non-peer-reviewed sources
+✓ Include EXTENSIVE numerical data: prevalence rates, mortality statistics, trial results, FDA approval dates, cost data, demographic breakdowns
+✓ Name SPECIFIC clinical trials with participant numbers, primary endpoints, hazard ratios, p-values
+✓ Include DETAILED health disparities data by race, gender, age, socioeconomic status, geographic region
+✓ Professional medical grant tone - formal, evidence-based, compelling for medical professionals
 
-**CLINICAL BACKGROUND**
-Comprehensive disease overview with epidemiology, pathophysiology, current standard of care. Must include 4-5 specific citations with prevalence data, mortality statistics, and disease burden metrics.
+MANDATORY OUTPUT STRUCTURE (MINIMUM 3,500 WORDS):
 
-**RECENT DATA & GUIDELINES**
-Latest clinical trials (name specific studies), FDA approvals with exact dates, recent guideline updates from professional societies. Must include 5-6 citations with specific trial names, participant numbers, primary endpoints, and statistical significance.
+**CLINICAL BACKGROUND** (800-1000 words)
+- Comprehensive disease pathophysiology and epidemiology
+- Global and US prevalence data with specific statistics
+- Mortality/morbidity burden with demographic breakdowns
+- Economic impact data (healthcare costs, productivity loss)
+- Standard of care evolution and current treatment paradigms
+- Must include 6-8 citations with specific data points
 
-**UNMET NEEDS & PRACTICE GAPS**
-Evidence-backed clinical practice gaps, medication adherence rates, provider knowledge deficits, access disparities. Must include 3-4 citations with specific percentages and demographic breakdowns.
+**RECENT DATA & GUIDELINES** (1000-1200 words)
+- Latest pivotal clinical trials (name studies, n=participants, primary endpoints)
+- FDA approvals with EXACT dates (month/year) and regulatory pathways
+- Recent guideline updates from professional societies (AHA, ACC, NCCN, ASCO, etc.)
+- Emerging therapies in pipeline with trial data
+- Real-world evidence studies and registry data
+- Must include 8-10 citations with trial names and statistical outcomes
 
-**EDUCATIONAL JUSTIFICATION**
-Funding rationale with evidence that medical education interventions improve clinical outcomes and reduce healthcare costs. Must include 3-4 citations demonstrating measurable educational impact.
+**UNMET NEEDS & PRACTICE GAPS** (800-1000 words)
+- Evidence-backed clinical practice variations with specific percentages
+- Medication adherence rates by demographic groups
+- Provider knowledge deficits with survey data
+- Access disparities by race, insurance, geography with specific statistics
+- Quality metrics and performance gaps
+- Patient outcome disparities with quantified data
+- Must include 6-8 citations with specific percentages and outcomes data
+
+**EDUCATIONAL JUSTIFICATION** (500-700 words)
+- Evidence that medical education interventions improve outcomes
+- Cost-effectiveness data for educational programs
+- Specific examples of successful educational interventions
+- Quantified impact on clinical practice and patient outcomes
+- ROI data for educational investments
+- Must include 4-6 citations demonstrating measurable educational impact
 
 **REFERENCES**
-Complete bibliography of all 15-20 references in standard medical format:
-Author(s). Title. Journal. Year;Volume(Issue):Page-Page.
+Complete numbered bibliography of ALL 20-30+ references in standard medical format:
+[1] Author(s). Title. Journal. Year;Volume(Issue):Page-Page.
 
-QUALITY CONTROL CHECKLIST:
-- Every statistical claim has a numbered citation
-- Trial names are specific (e.g., PARADIGM-HF, EMPEROR-Reduced, DAPA-HF)
-- FDA approval dates include month and year
-- Health disparities include specific demographic data
-- Professional society guidelines referenced (AHA/ACC, ESC, etc.)
-- Medical terminology appropriate for clinician audience
-- Minimum 2,500 words total output
+RESEARCH DEPTH REQUIREMENTS:
+- Every statistic MUST have a citation
+- Include specific trial names, not just "studies show"
+- Mention FDA approval dates, drug names, indication details
+- Include demographic data breakdowns (% by race, age, gender)
+- Reference professional society guidelines by name and year
+- Use medical terminology appropriate for physician audience
+- NO bullet points or summary format - full paragraphs with extensive detail
 
-Count your references before submitting - you must have 15-20 citations.
+QUALITY STANDARDS:
+- Minimum 3,500 words total
+- 20+ peer-reviewed citations (aim for 25-30)
+- Specific data points in every paragraph
+- Professional grant-writing tone throughout
+- Evidence-based statements only
+
+DO NOT give me bullet points or brief summaries. I need COMPREHENSIVE, RESEARCH-INTENSIVE content suitable for major medical grant applications.
 
 End with: → Next step: Format Recommender. Are you ready to continue?`;
 
@@ -86,9 +116,9 @@ export default async function handler(req, res) {
       userMessage += `\n\nAdditional Context: ${additional_context}`;
     }
 
-    // Call OpenAI GPT-4
+    // Call OpenAI GPT-4 with maximum tokens for comprehensive research
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4',
+      model: 'gpt-4o',
       messages: [
         {
           role: 'system',
@@ -96,11 +126,11 @@ export default async function handler(req, res) {
         },
         {
           role: 'user',
-          content: userMessage
+          content: `${userMessage}\n\nThis is for a major medical grant application. I need the MOST THOROUGH, RESEARCH-INTENSIVE analysis possible with maximum citations (20-30+) and extensive detail. Cost is not a concern - generate the most comprehensive content possible. NO bullet points or brief summaries.`
         }
       ],
       temperature: 0.1, // Low temperature for accuracy and consistency in medical content
-      max_tokens: 4000  // Increased tokens for comprehensive output with 15-20 references
+      max_tokens: 15000  // Maximum tokens for comprehensive output with 20-30+ references
     });
 
     const output = completion.choices[0]?.message?.content;
