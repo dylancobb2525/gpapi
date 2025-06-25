@@ -4,8 +4,7 @@
   "description": "Step 1 of 5: RFP Analyzer for medical education grant proposals",
   "type": "module",
   "scripts": {
-    "dev": "vercel dev",
-    "build": "vercel build"
+    "dev": "vercel dev"
   },
   "dependencies": {
     "openai": "^4.26.0"
