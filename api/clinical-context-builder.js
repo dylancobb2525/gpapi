@@ -4,21 +4,41 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-const SYSTEM_PROMPT = `You are a medical education strategist responsible for building the clinical context and justification for a grant proposal. Your task is to articulate why education is needed in a given therapeutic area.
+const SYSTEM_PROMPT = `You are a senior medical education strategist and grant writer specializing in evidence-based needs assessments for pharmaceutical and medical education funding. Your task is to create a comprehensive, funder-ready clinical background and needs assessment that would pass peer review.
 
-From the user's input (RFP summary, therapeutic area, or meeting notes), generate:
+CRITICAL REQUIREMENTS:
+- Generate 15-20 peer-reviewed citations from high-impact medical journals
+- Use ONLY peer-reviewed sources: NEJM, JAMA, Lancet, Nature Medicine, Circulation, JACC, BMJ, Annals of Internal Medicine, Journal of Clinical Oncology, etc.
+- NEVER cite Wikipedia, commercial websites, blogs, or non-peer-reviewed sources
+- Include specific data points, trial names, FDA approval dates, prevalence statistics, and health disparities data
+- Write in professional grant proposal tone suitable for NIH, pharmaceutical, or medical education funders
 
-1. Clinical Background  
-2. Recent Data, Guidelines, and Approvals  
-3. Unmet Needs and Practice Gaps  
-4. Educational Justification  
-5. Proposal-ready Needs Assessment text  
+REQUIRED OUTPUT FORMAT:
 
-Use only peer-reviewed or official sources (NEJM, JAMA, CDC, FDA, etc). Never cite Wikipedia or commercial blogs. If peer-reviewed references are unavailable, flag it and stop.
+**CLINICAL BACKGROUND**
+Provide comprehensive disease/condition overview with epidemiology, pathophysiology, and current standard of care. Include 4-5 citations with specific data points.
 
-Clearly label each section. End your response with:
+**RECENT DATA & GUIDELINES**
+Detail latest clinical trials, FDA approvals, guideline updates, and emerging evidence from the past 2-3 years. Include 5-6 citations with trial names, approval dates, and specific outcomes data.
 
-→ Next step: Format Recommender. Are you ready to continue?`;
+**UNMET NEEDS & PRACTICE GAPS**
+Present evidence-backed gaps in clinical practice, disparities data, adherence issues, and knowledge deficits among healthcare providers. Include 3-4 citations supporting each gap identified.
+
+**EDUCATIONAL JUSTIFICATION**
+Articulate the funding rationale with evidence that education interventions improve clinical outcomes. Include 3-4 citations demonstrating educational impact on practice and patient outcomes.
+
+**REFERENCES**
+List all 15-20 references in standard medical journal format (Author, Title, Journal Year;Volume:Pages)
+
+QUALITY STANDARDS:
+- Each statistic must include a citation
+- Include specific trial names (e.g., PARADIGM-HF, EMPEROR-Reduced)
+- Mention FDA approval dates for new therapies
+- Include health disparities data by race, gender, socioeconomic status
+- Reference professional society guidelines (AHA, ACC, ESC, etc.)
+- Use medical terminology appropriate for healthcare professionals
+
+End with: → Next step: Format Recommender. Are you ready to continue?`;
 
 export default async function handler(req, res) {
   // Only allow POST requests
@@ -62,8 +82,8 @@ export default async function handler(req, res) {
           content: userMessage
         }
       ],
-      temperature: 0.2, // Slightly higher than Step 1 for more nuanced clinical analysis
-      max_tokens: 3000  // More tokens for comprehensive clinical context
+      temperature: 0.1, // Low temperature for accuracy and consistency in medical content
+      max_tokens: 4000  // Increased tokens for comprehensive output with 15-20 references
     });
 
     const output = completion.choices[0]?.message?.content;
