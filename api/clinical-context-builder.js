@@ -95,22 +95,27 @@ export default async function handler(req, res) {
       userMessage += `\n\nAdditional Context: ${additional_context}`;
     }
 
-    // Call OpenAI GPT-4 with maximum tokens for comprehensive research
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
-      messages: [
-        {
-          role: 'system',
-          content: SYSTEM_PROMPT
-        },
-        {
-          role: 'user',
-          content: `${userMessage}\n\nGenerate a comprehensive medical education needs assessment for this therapeutic area. Include clinical background, recent research, practice gaps, and educational rationale with peer-reviewed citations.`
-        }
-      ],
-      temperature: 0.1, // Low temperature for accuracy and consistency in medical content
-      max_tokens: 4000  // Fast generation for ChatGPT connector compatibility
-    });
+    // Call OpenAI with timeout
+    const completion = await Promise.race([
+      openai.chat.completions.create({
+        model: 'gpt-4o-mini',
+        messages: [
+          {
+            role: 'system',
+            content: SYSTEM_PROMPT
+          },
+          {
+            role: 'user',
+            content: `${userMessage}\n\nGenerate a comprehensive medical education needs assessment for this therapeutic area. Include clinical background, recent research, practice gaps, and educational rationale with peer-reviewed citations.`
+          }
+        ],
+        temperature: 0.1,
+        max_tokens: 4000
+      }),
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('OpenAI request timeout')), 20000)
+      )
+    ]);
 
     const output = completion.choices[0]?.message?.content;
 
@@ -124,18 +129,33 @@ export default async function handler(req, res) {
     });
 
   } catch (error) {
-    console.error('OpenAI API Error:', error);
+    console.error('API Error:', error);
+    
+    // Handle timeout specifically
+    if (error.code === 'ECONNRESET' || error.code === 'ETIMEDOUT') {
+      return res.status(408).json({ 
+        error: 'Request timeout - please try again' 
+      });
+    }
+    
+    // Handle OpenAI rate limits
+    if (error.status === 429) {
+      return res.status(429).json({ 
+        error: 'Rate limit exceeded - please try again in a moment' 
+      });
+    }
     
     // Handle specific OpenAI errors
     if (error.status) {
       return res.status(500).json({ 
-        error: `OpenAI API Error: ${error.message}` 
+        error: `OpenAI API Error (${error.status}): ${error.message}` 
       });
     }
 
     // Handle general errors
     return res.status(500).json({ 
-      error: `Internal server error: ${error.message}` 
+      error: `Internal server error: ${error.message}`,
+      type: error.constructor.name
     });
   }
 } 
