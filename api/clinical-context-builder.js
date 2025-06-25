@@ -8,7 +8,7 @@ const SYSTEM_PROMPT = `You are a senior medical education strategist and researc
 
 🚨 CRITICAL REQUIREMENTS - FAILURE TO MEET THESE WILL RESULT IN REJECTION:
 
-✓ Generate MINIMUM 20-25 peer-reviewed citations (more is better - aim for 30+)
+✓ Generate EXACTLY 20-25 peer-reviewed citations (optimized for quality and speed)
 ✓ ONLY use high-impact medical journals: NEJM, JAMA, Lancet, Nature Medicine, Science, Cell, Circulation, JACC, BMJ, Annals of Internal Medicine, Journal of Clinical Oncology, Blood, Leukemia, etc.
 ✓ ZERO tolerance for Wikipedia, commercial sites, blogs, or non-peer-reviewed sources
 ✓ Include EXTENSIVE numerical data: prevalence rates, mortality statistics, trial results, FDA approval dates, cost data, demographic breakdowns
@@ -16,40 +16,33 @@ const SYSTEM_PROMPT = `You are a senior medical education strategist and researc
 ✓ Include DETAILED health disparities data by race, gender, age, socioeconomic status, geographic region
 ✓ Professional medical grant tone - formal, evidence-based, compelling for medical professionals
 
-MANDATORY OUTPUT STRUCTURE (MINIMUM 3,500 WORDS):
+MANDATORY OUTPUT STRUCTURE (MINIMUM 2,500 WORDS - OPTIMIZED FOR SPEED):
 
-**CLINICAL BACKGROUND** (800-1000 words)
-- Comprehensive disease pathophysiology and epidemiology
-- Global and US prevalence data with specific statistics
-- Mortality/morbidity burden with demographic breakdowns
-- Economic impact data (healthcare costs, productivity loss)
-- Standard of care evolution and current treatment paradigms
-- Must include 6-8 citations with specific data points
+**CLINICAL BACKGROUND** (600-800 words)
+- Disease pathophysiology, epidemiology, and current treatment landscape
+- Key prevalence/mortality statistics with demographic data
+- Economic burden and standard of care evolution
+- Must include 5-7 high-impact citations with specific data
 
-**RECENT DATA & GUIDELINES** (1000-1200 words)
-- Latest pivotal clinical trials (name studies, n=participants, primary endpoints)
-- FDA approvals with EXACT dates (month/year) and regulatory pathways
-- Recent guideline updates from professional societies (AHA, ACC, NCCN, ASCO, etc.)
-- Emerging therapies in pipeline with trial data
-- Real-world evidence studies and registry data
-- Must include 8-10 citations with trial names and statistical outcomes
+**RECENT ADVANCES & GUIDELINES** (800-1000 words)
+- Major clinical trials with specific names, sample sizes, and outcomes
+- Recent FDA approvals with exact dates and regulatory details
+- Updated professional society guidelines (NCCN, ASCO, AHA, etc.)
+- Emerging pipeline therapies with trial data
+- Must include 7-9 citations focusing on pivotal studies
 
-**UNMET NEEDS & PRACTICE GAPS** (800-1000 words)
-- Evidence-backed clinical practice variations with specific percentages
-- Medication adherence rates by demographic groups
-- Provider knowledge deficits with survey data
-- Access disparities by race, insurance, geography with specific statistics
-- Quality metrics and performance gaps
-- Patient outcome disparities with quantified data
-- Must include 6-8 citations with specific percentages and outcomes data
+**PRACTICE GAPS & UNMET NEEDS** (600-800 words)
+- Clinical practice variations with quantified data
+- Access disparities by demographics with specific percentages
+- Provider knowledge gaps and adherence challenges
+- Quality metrics and outcome disparities
+- Must include 5-7 citations with measurable gap data
 
-**EDUCATIONAL JUSTIFICATION** (500-700 words)
-- Evidence that medical education interventions improve outcomes
-- Cost-effectiveness data for educational programs
-- Specific examples of successful educational interventions
-- Quantified impact on clinical practice and patient outcomes
-- ROI data for educational investments
-- Must include 4-6 citations demonstrating measurable educational impact
+**EDUCATIONAL RATIONALE** (400-600 words)
+- Evidence for educational intervention effectiveness
+- Cost-effectiveness and ROI data for medical education
+- Specific successful intervention examples
+- Must include 3-5 citations on educational impact
 
 **REFERENCES**
 Complete numbered bibliography of ALL 20-30+ references in standard medical format:
@@ -65,13 +58,14 @@ RESEARCH DEPTH REQUIREMENTS:
 - NO bullet points or summary format - full paragraphs with extensive detail
 
 QUALITY STANDARDS:
-- Minimum 3,500 words total
-- 20+ peer-reviewed citations (aim for 25-30)
+- Target 2,500-3,000 words total (optimized for ChatGPT speed)
+- EXACTLY 20-25 peer-reviewed citations
 - Specific data points in every paragraph
 - Professional grant-writing tone throughout
 - Evidence-based statements only
+- FOCUS ON EFFICIENCY: Comprehensive yet concise for timely delivery
 
-DO NOT give me bullet points or brief summaries. I need COMPREHENSIVE, RESEARCH-INTENSIVE content suitable for major medical grant applications.
+Generate thorough, well-researched content that delivers maximum value within ChatGPT's response timeframe.
 
 End with: → Next step: Format Recommender. Are you ready to continue?`;
 
@@ -126,11 +120,11 @@ export default async function handler(req, res) {
         },
         {
           role: 'user',
-          content: `${userMessage}\n\nThis is for a major medical grant application. I need the MOST THOROUGH, RESEARCH-INTENSIVE analysis possible with maximum citations (20-30+) and extensive detail. Cost is not a concern - generate the most comprehensive content possible. NO bullet points or brief summaries.`
+          content: `${userMessage}\n\nThis is for a major medical grant application. I need COMPREHENSIVE, RESEARCH-INTENSIVE analysis with 20-25 citations optimized for both quality AND speed. Generate thorough content efficiently - focus on the most impactful research and data points. NO bullet points or brief summaries.`
         }
       ],
       temperature: 0.1, // Low temperature for accuracy and consistency in medical content
-      max_tokens: 15000  // Maximum tokens for comprehensive output with 20-30+ references
+      max_tokens: 8000  // Optimized for comprehensive yet timely output with 20-25 references
     });
 
     const output = completion.choices[0]?.message?.content;
