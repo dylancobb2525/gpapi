@@ -54,13 +54,25 @@ export default async function handler(req, res) {
   try {
     const { therapeutic_area, rfp_summary, meeting_notes, additional_context } = req.body;
 
-    // Validate required therapeutic_area field
-    if (!therapeutic_area || typeof therapeutic_area !== 'string' || therapeutic_area.trim().length === 0) {
-      return res.status(400).json({ error: 'Therapeutic area field is required and must be a non-empty string' });
+    // Validate therapeutic_area field - accept any reasonable medical string
+    if (!therapeutic_area) {
+      return res.status(400).json({ error: 'Therapeutic area field is required' });
+    }
+    
+    if (typeof therapeutic_area !== 'string') {
+      return res.status(400).json({ error: 'Therapeutic area must be a string' });
+    }
+
+    // Clean and prepare the therapeutic area input
+    const cleanTherapeuticArea = therapeutic_area.trim();
+    
+    // Very permissive validation - just ensure it's not empty after trimming
+    if (cleanTherapeuticArea.length === 0) {
+      return res.status(400).json({ error: 'Therapeutic area cannot be empty' });
     }
 
     // Build user message with all provided context
-    let userMessage = `Therapeutic Area: ${therapeutic_area}`;
+    let userMessage = `Therapeutic Area: ${cleanTherapeuticArea}`;
 
     if (rfp_summary && typeof rfp_summary === 'string' && rfp_summary.trim().length > 0) {
       userMessage += `\n\nRFP Summary: ${rfp_summary}`;
