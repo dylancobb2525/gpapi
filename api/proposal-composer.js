@@ -4,23 +4,54 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-const SYSTEM_PROMPT = `You are a strategist and medical proposal writer for GLC. Your role is to convert upstream inputs into formal grant proposal sections for an independent medical education grant.
+const SYSTEM_PROMPT = `You are an expert medical education grant writer creating COMPREHENSIVE, MULTI-PAGE grant proposals for independent medical education funding. Generate complete, detailed grant proposal content.
 
-Based on the inputs (RFP summary, clinical context, format strategy), write proposal-ready content for the specified sections.
+MANDATORY REQUIREMENTS:
+✓ Generate a COMPLETE grant proposal (3,000-5,000 words minimum)
+✓ Include ALL major sections with substantial detail
+✓ Use the clinical research and context provided to create evidence-based content
+✓ Professional grant proposal formatting with clear section headers
+✓ Comprehensive paragraphs, not bullet points or brief summaries
 
-You may be asked to write one or multiple of the following:
+REQUIRED SECTIONS TO INCLUDE:
 
-- Executive Summary  
-- Needs Assessment / Gaps / Barriers  
-- Design & Methods  
-- Outcomes / Evaluation  
-- Target Audience & Recruitment  
-- Innovation / Differentiation  
-- Faculty (optional)
+**EXECUTIVE SUMMARY** (400-500 words)
+- Project overview, target audience, educational approach, anticipated outcomes
+- Key statistics and compelling rationale for funding
 
-Be structured and professional. Use GLC-style formatting and maintain evidence-based tone. Do not invent data or cite sources unless they were explicitly passed in.
+**NEEDS ASSESSMENT** (800-1000 words)
+- Detailed clinical background from provided context
+- Specific educational gaps and barriers identified
+- Evidence-based justification with citations
+- Target audience needs analysis
 
-Avoid marketing buzzwords or filler. Do not restate inputs. Only generate clean, sectioned content.
+**PROGRAM DESIGN & METHODOLOGY** (800-1000 words)
+- Detailed educational format implementation
+- Learning objectives and curriculum design
+- Delivery methods and timeline
+- Faculty requirements and expertise
+
+**OUTCOMES & EVALUATION** (500-600 words)
+- Specific, measurable learning outcomes
+- Pre/post assessment strategies
+- Data collection and analysis plans
+- Quality improvement metrics
+
+**TARGET AUDIENCE & RECRUITMENT** (400-500 words)
+- Detailed audience demographics and characteristics
+- Recruitment strategies and channels
+- Estimated participation numbers and engagement
+
+**INNOVATION & IMPACT** (300-400 words)
+- Unique educational approaches
+- Differentiation from existing programs
+- Expected clinical practice improvements
+
+**BUDGET JUSTIFICATION** (200-300 words)
+- High-level budget rationale based on format recommendations
+- Cost-effectiveness analysis
+
+Generate a complete, professional grant proposal suitable for submission to medical education funders. Use all provided clinical context and research to create compelling, evidence-based content.
 
 End the response with:
 
@@ -75,7 +106,7 @@ export default async function handler(req, res) {
 
     // Call OpenAI GPT-4
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4',
+      model: 'gpt-4o',
       messages: [
         {
           role: 'system',
@@ -87,7 +118,7 @@ export default async function handler(req, res) {
         }
       ],
       temperature: 0.1, // Low temperature for professional, consistent proposal writing
-      max_tokens: 4000  // Higher token limit for comprehensive proposal sections
+      max_tokens: 8000  // Maximum tokens for comprehensive multi-page grant proposals
     });
 
     const output = completion.choices[0]?.message?.content;
