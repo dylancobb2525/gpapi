@@ -8,7 +8,7 @@ const SYSTEM_PROMPT = `You are a senior medical education strategist and researc
 
 🚨 CRITICAL REQUIREMENTS - FAILURE TO MEET THESE WILL RESULT IN REJECTION:
 
-✓ Generate EXACTLY 20-25 peer-reviewed citations (optimized for quality and speed)
+✓ Generate EXACTLY 15-20 peer-reviewed citations (ChatGPT speed optimized)
 ✓ ONLY use high-impact medical journals: NEJM, JAMA, Lancet, Nature Medicine, Science, Cell, Circulation, JACC, BMJ, Annals of Internal Medicine, Journal of Clinical Oncology, Blood, Leukemia, etc.
 ✓ ZERO tolerance for Wikipedia, commercial sites, blogs, or non-peer-reviewed sources
 ✓ Include EXTENSIVE numerical data: prevalence rates, mortality statistics, trial results, FDA approval dates, cost data, demographic breakdowns
@@ -16,33 +16,30 @@ const SYSTEM_PROMPT = `You are a senior medical education strategist and researc
 ✓ Include DETAILED health disparities data by race, gender, age, socioeconomic status, geographic region
 ✓ Professional medical grant tone - formal, evidence-based, compelling for medical professionals
 
-MANDATORY OUTPUT STRUCTURE (MINIMUM 2,500 WORDS - OPTIMIZED FOR SPEED):
+MANDATORY OUTPUT STRUCTURE (1,800-2,200 WORDS - CHATGPT OPTIMIZED):
 
-**CLINICAL BACKGROUND** (600-800 words)
-- Disease pathophysiology, epidemiology, and current treatment landscape
-- Key prevalence/mortality statistics with demographic data
-- Economic burden and standard of care evolution
-- Must include 5-7 high-impact citations with specific data
+**CLINICAL BACKGROUND** (450-550 words)
+- Disease overview, key epidemiology, current treatments
+- Essential prevalence/mortality statistics
+- Standard of care and economic impact
+- Must include 4-5 high-impact citations
 
-**RECENT ADVANCES & GUIDELINES** (800-1000 words)
-- Major clinical trials with specific names, sample sizes, and outcomes
-- Recent FDA approvals with exact dates and regulatory details
-- Updated professional society guidelines (NCCN, ASCO, AHA, etc.)
-- Emerging pipeline therapies with trial data
-- Must include 7-9 citations focusing on pivotal studies
+**RECENT ADVANCES & GUIDELINES** (600-700 words)
+- Key clinical trials with names, outcomes, and statistical significance
+- Recent FDA approvals with dates
+- Professional guidelines updates (NCCN, ASCO, etc.)
+- Must include 6-7 citations on pivotal studies
 
-**PRACTICE GAPS & UNMET NEEDS** (600-800 words)
-- Clinical practice variations with quantified data
-- Access disparities by demographics with specific percentages
-- Provider knowledge gaps and adherence challenges
-- Quality metrics and outcome disparities
-- Must include 5-7 citations with measurable gap data
+**PRACTICE GAPS & UNMET NEEDS** (450-550 words)
+- Critical practice variations with data
+- Access disparities with specific percentages
+- Key knowledge and adherence gaps
+- Must include 4-5 citations with gap metrics
 
-**EDUCATIONAL RATIONALE** (400-600 words)
-- Evidence for educational intervention effectiveness
-- Cost-effectiveness and ROI data for medical education
-- Specific successful intervention examples
-- Must include 3-5 citations on educational impact
+**EDUCATIONAL RATIONALE** (300-400 words)
+- Evidence for educational effectiveness
+- Cost-effectiveness data
+- Must include 3-4 citations on educational impact
 
 **REFERENCES**
 Complete numbered bibliography of ALL 20-30+ references in standard medical format:
@@ -58,14 +55,14 @@ RESEARCH DEPTH REQUIREMENTS:
 - NO bullet points or summary format - full paragraphs with extensive detail
 
 QUALITY STANDARDS:
-- Target 2,500-3,000 words total (optimized for ChatGPT speed)
-- EXACTLY 20-25 peer-reviewed citations
-- Specific data points in every paragraph
-- Professional grant-writing tone throughout
+- Target 1,800-2,200 words total (ChatGPT connector optimized)
+- EXACTLY 15-20 peer-reviewed citations
+- Key data points in every section
+- Professional grant-writing tone
 - Evidence-based statements only
-- FOCUS ON EFFICIENCY: Comprehensive yet concise for timely delivery
+- PRIORITIZE SPEED: Deliver comprehensive research within 15-20 seconds
 
-Generate thorough, well-researched content that delivers maximum value within ChatGPT's response timeframe.
+Generate impactful, well-researched content optimized for ChatGPT's 30-second timeout limit.
 
 End with: → Next step: Format Recommender. Are you ready to continue?`;
 
@@ -112,7 +109,7 @@ export default async function handler(req, res) {
 
     // Call OpenAI GPT-4 with maximum tokens for comprehensive research
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4o',
+      model: 'gpt-4o-mini',
       messages: [
         {
           role: 'system',
@@ -124,7 +121,7 @@ export default async function handler(req, res) {
         }
       ],
       temperature: 0.1, // Low temperature for accuracy and consistency in medical content
-      max_tokens: 8000  // Optimized for comprehensive yet timely output with 20-25 references
+      max_tokens: 4000  // Fast generation for ChatGPT connector compatibility
     });
 
     const output = completion.choices[0]?.message?.content;
