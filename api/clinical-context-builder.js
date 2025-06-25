@@ -80,52 +80,44 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Therapeutic area cannot be empty' });
     }
 
-    // Build user message with all provided context
-    let userMessage = `Therapeutic Area: ${cleanTherapeuticArea}`;
+    // Temporary: Return static content to test ChatGPT connector
+    const staticOutput = `**CLINICAL BACKGROUND**
 
-    if (rfp_summary && typeof rfp_summary === 'string' && rfp_summary.trim().length > 0) {
-      userMessage += `\n\nRFP Summary: ${rfp_summary}`;
-    }
+${cleanTherapeuticArea} represents a significant therapeutic area requiring comprehensive medical education initiatives. The current treatment landscape involves multiple therapeutic modalities with varying efficacy profiles and safety considerations. Healthcare providers require ongoing education to optimize patient outcomes and implement evidence-based treatment protocols.
 
-    if (meeting_notes && typeof meeting_notes === 'string' && meeting_notes.trim().length > 0) {
-      userMessage += `\n\nMeeting Notes: ${meeting_notes}`;
-    }
+Current prevalence data indicates substantial patient populations affected by conditions within this therapeutic area, with associated healthcare costs representing significant economic burden. Treatment guidelines from professional medical societies provide evidence-based recommendations, though implementation gaps persist across healthcare systems.
 
-    if (additional_context && typeof additional_context === 'string' && additional_context.trim().length > 0) {
-      userMessage += `\n\nAdditional Context: ${additional_context}`;
-    }
+**RECENT ADVANCES & GUIDELINES**
 
-    // Call OpenAI with timeout
-    const completion = await Promise.race([
-      openai.chat.completions.create({
-        model: 'gpt-4o-mini',
-        messages: [
-          {
-            role: 'system',
-            content: SYSTEM_PROMPT
-          },
-          {
-            role: 'user',
-            content: `${userMessage}\n\nGenerate a comprehensive medical education needs assessment for this therapeutic area. Include clinical background, recent research, practice gaps, and educational rationale with peer-reviewed citations.`
-          }
-        ],
-        temperature: 0.1,
-        max_tokens: 4000
-      }),
-      new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('OpenAI request timeout')), 20000)
-      )
-    ]);
+Recent clinical trials have demonstrated improved outcomes with novel therapeutic approaches. FDA approvals within the past 24 months have expanded treatment options for patients in this therapeutic area. Professional society guidelines have been updated to reflect emerging evidence and clinical best practices.
 
-    const output = completion.choices[0]?.message?.content;
+Registry data and real-world evidence studies continue to inform clinical decision-making and highlight areas for continued research and development. Healthcare providers require regular updates on evolving treatment paradigms and emerging therapeutic options.
 
-    if (!output) {
-      throw new Error('No response received from OpenAI');
-    }
+**PRACTICE GAPS & UNMET NEEDS**
 
-    // Return clean response
+Clinical practice variations exist across healthcare settings, with documented disparities in treatment access and outcomes. Provider knowledge gaps have been identified through professional surveys and continuing education needs assessments.
+
+Quality metrics indicate opportunities for improvement in adherence to evidence-based guidelines and optimization of patient monitoring protocols. Educational interventions targeting these gaps can improve clinical outcomes and patient satisfaction.
+
+**EDUCATIONAL RATIONALE**
+
+Medical education programs have demonstrated measurable impact on clinical practice patterns and patient outcomes. Evidence supports the effectiveness of targeted educational interventions in addressing identified knowledge gaps and improving adherence to clinical guidelines.
+
+Cost-effectiveness analyses indicate positive return on investment for well-designed continuing medical education programs. Educational initiatives should focus on practical implementation strategies and evidence-based approaches to optimize clinical care.
+
+**REFERENCES**
+
+[1] Smith A, et al. Clinical outcomes in therapeutic area management. N Engl J Med. 2023;388(12):1095-1103.
+[2] Johnson B, et al. Healthcare provider education effectiveness. JAMA. 2023;329(8):645-652.
+[3] Williams C, et al. Treatment guidelines implementation. Lancet. 2023;401(10385):1234-1241.
+[4] Brown D, et al. Real-world evidence in clinical practice. Ann Intern Med. 2023;176(4):456-463.
+[5] Davis E, et al. Professional development impact assessment. J Clin Oncol. 2023;41(15):2789-2796.
+
+→ Next step: Format Recommender. Are you ready to continue?`;
+
+    // Return static response for testing
     return res.status(200).json({
-      output: output.trim()
+      output: staticOutput
     });
 
   } catch (error) {
