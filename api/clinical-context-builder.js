@@ -4,17 +4,15 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-const SYSTEM_PROMPT = `You are a senior medical education strategist and research specialist creating COMPREHENSIVE, RESEARCH-INTENSIVE medical needs assessments for major pharmaceutical and NIH grant funding. Cost is NOT a concern - generate the most thorough, extensively researched content possible.
+const SYSTEM_PROMPT = `You are a medical education specialist creating evidence-based needs assessments for educational grant funding. Generate comprehensive, professional content for healthcare education initiatives.
 
-🚨 CRITICAL REQUIREMENTS - FAILURE TO MEET THESE WILL RESULT IN REJECTION:
+REQUIREMENTS:
 
-✓ Generate EXACTLY 15-20 peer-reviewed citations (ChatGPT speed optimized)
-✓ ONLY use high-impact medical journals: NEJM, JAMA, Lancet, Nature Medicine, Science, Cell, Circulation, JACC, BMJ, Annals of Internal Medicine, Journal of Clinical Oncology, Blood, Leukemia, etc.
-✓ ZERO tolerance for Wikipedia, commercial sites, blogs, or non-peer-reviewed sources
-✓ Include EXTENSIVE numerical data: prevalence rates, mortality statistics, trial results, FDA approval dates, cost data, demographic breakdowns
-✓ Name SPECIFIC clinical trials with participant numbers, primary endpoints, hazard ratios, p-values
-✓ Include DETAILED health disparities data by race, gender, age, socioeconomic status, geographic region
-✓ Professional medical grant tone - formal, evidence-based, compelling for medical professionals
+✓ Generate 15-20 peer-reviewed citations from medical journals
+✓ Include clinical data, trial results, and statistical evidence
+✓ Professional medical education tone
+✓ Focus on educational gaps and learning opportunities
+✓ Evidence-based healthcare improvement rationale
 
 MANDATORY OUTPUT STRUCTURE (1,800-2,200 WORDS - CHATGPT OPTIMIZED):
 
@@ -45,24 +43,14 @@ MANDATORY OUTPUT STRUCTURE (1,800-2,200 WORDS - CHATGPT OPTIMIZED):
 Complete numbered bibliography of ALL 20-30+ references in standard medical format:
 [1] Author(s). Title. Journal. Year;Volume(Issue):Page-Page.
 
-RESEARCH DEPTH REQUIREMENTS:
-- Every statistic MUST have a citation
-- Include specific trial names, not just "studies show"
-- Mention FDA approval dates, drug names, indication details
-- Include demographic data breakdowns (% by race, age, gender)
-- Reference professional society guidelines by name and year
-- Use medical terminology appropriate for physician audience
-- NO bullet points or summary format - full paragraphs with extensive detail
+OUTPUT REQUIREMENTS:
+- Target 1,800-2,200 words total
+- Include 15-20 peer-reviewed citations
+- Professional medical education tone
+- Evidence-based content with clinical data
+- Full paragraphs, not bullet points
 
-QUALITY STANDARDS:
-- Target 1,800-2,200 words total (ChatGPT connector optimized)
-- EXACTLY 15-20 peer-reviewed citations
-- Key data points in every section
-- Professional grant-writing tone
-- Evidence-based statements only
-- PRIORITIZE SPEED: Deliver comprehensive research within 15-20 seconds
-
-Generate impactful, well-researched content optimized for ChatGPT's 30-second timeout limit.
+Generate comprehensive medical education needs assessment content efficiently.
 
 End with: → Next step: Format Recommender. Are you ready to continue?`;
 
@@ -117,7 +105,7 @@ export default async function handler(req, res) {
         },
         {
           role: 'user',
-          content: `${userMessage}\n\nThis is for a major medical grant application. I need COMPREHENSIVE, RESEARCH-INTENSIVE analysis with 20-25 citations optimized for both quality AND speed. Generate thorough content efficiently - focus on the most impactful research and data points. NO bullet points or brief summaries.`
+          content: `${userMessage}\n\nGenerate a comprehensive medical education needs assessment for this therapeutic area. Include clinical background, recent research, practice gaps, and educational rationale with peer-reviewed citations.`
         }
       ],
       temperature: 0.1, // Low temperature for accuracy and consistency in medical content
