@@ -4,63 +4,110 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
+const SYSTEM_PROMPT = `You are a simulated CME/IME grant reviewer for a pharmaceutical company. Your task is to review the user's grant proposal draft and provide structured, professional, and critical feedback.
+
+Your response must include:
+
+1. Scored evaluation (1–5 scale) for:
+   - Strategic Fit / RFP Alignment  
+   - Needs Assessment Quality  
+   - Educational Design & Format Strategy  
+   - Outcomes Planning & Metrics  
+   - Clarity & Tone
+
+2. Summary of strengths  
+3. Summary of weaknesses or red flags  
+4. Actionable recommendations  
+5. Overall confidence rating: High / Medium / Low
+
+Use a clinical and direct tone. No fluff or sugarcoating. If something is vague or weak, say so and explain how to improve it.
+
+End the response with:
+
+→ This concludes the review. You may now return to the Master GPT to revise or finalize the proposal.`;
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
-    const { proposal_text } = req.body;
+    const { proposal_text, rfp_context, section_name } = req.body;
 
+    // Validate required fields
     if (!proposal_text || typeof proposal_text !== 'string' || proposal_text.trim().length === 0) {
       return res.status(400).json({ 
-        error: 'Proposal text is required and must be a non-empty string' 
+        error: 'Proposal text field is required and must be a non-empty string' 
       });
     }
 
-    // Ultra-fast review call
+    // Build user message with proposal text and optional context
+    let userMessage = `Proposal Text to Review:\n\n${proposal_text}`;
+
+    if (rfp_context && typeof rfp_context === 'string' && rfp_context.trim().length > 0) {
+      userMessage += `\n\nRFP Context: ${rfp_context}`;
+    }
+
+    if (section_name && typeof section_name === 'string' && section_name.trim().length > 0) {
+      userMessage += `\n\nSection Name: ${section_name}`;
+    }
+
+    // Call OpenAI with timeout protection
     const completion = await Promise.race([
       openai.chat.completions.create({
-        model: 'gpt-4o-mini',
+        model: 'gpt-4o',
         messages: [
           {
             role: 'system',
-            content: 'Review this medical education grant proposal. Provide a concise assessment covering: strengths, areas for improvement, compliance with grant requirements, and specific recommendations. Be constructive and actionable (500-700 words).'
+            content: SYSTEM_PROMPT
           },
           {
             role: 'user',
-            content: `Review this grant proposal:\n\n${proposal_text.substring(0, 2000)}`
+            content: userMessage
           }
         ],
-        max_tokens: 1200,
-        temperature: 0.1
+        temperature: 0.2,
+        max_tokens: 3500
       }),
       new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Timeout')), 10000)
+        setTimeout(() => reject(new Error('Proposal review timeout')), 20000)
       )
     ]);
 
     const output = completion.choices[0]?.message?.content;
 
     if (!output) {
-      throw new Error('No response received');
+      throw new Error('No response received from OpenAI');
     }
 
     return res.status(200).json({
-      output: output.trim() + '\n\n→ Grant Pipeline Complete! Your proposal has been reviewed and is ready for submission.'
+      output: output.trim()
     });
 
   } catch (error) {
     console.error('Proposal Reviewer Error:', error);
     
-    if (error.message === 'Timeout') {
+    if (error.message === 'Proposal review timeout') {
       return res.status(408).json({ 
-        error: 'Review timeout - please try again' 
+        error: 'Proposal review timeout - please try again' 
       });
     }
     
+    if (error.status === 429) {
+      return res.status(429).json({ 
+        error: 'Rate limit exceeded - please try again in a moment' 
+      });
+    }
+    
+    if (error.status) {
+      return res.status(500).json({ 
+        error: `OpenAI API Error (${error.status}): ${error.message}` 
+      });
+    }
+
     return res.status(500).json({ 
-      error: `Error: ${error.message}`
+      error: `Internal server error: ${error.message}`,
+      type: error.constructor.name
     });
   }
 } 
