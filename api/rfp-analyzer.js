@@ -36,35 +36,43 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { text, context } = req.body;
+    const { rfp_text, text, context } = req.body;
+
+    // Accept either 'rfp_text' or 'text' parameter for flexibility
+    const inputText = rfp_text || text;
 
     // Validate required text field
-    if (!text || typeof text !== 'string' || text.trim().length === 0) {
-      return res.status(400).json({ error: 'Text field is required and must be a non-empty string' });
+    if (!inputText || typeof inputText !== 'string' || inputText.trim().length === 0) {
+      return res.status(400).json({ error: 'RFP text field is required and must be a non-empty string' });
     }
 
     // Prepare user message with optional context
-    let userMessage = text;
+    let userMessage = inputText;
     if (context && typeof context === 'string' && context.trim().length > 0) {
-      userMessage = `Context: ${context}\n\nText to analyze: ${text}`;
+      userMessage = `Context: ${context}\n\nText to analyze: ${inputText}`;
     }
 
-    // Call OpenAI GPT-4
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4',
-      messages: [
-        {
-          role: 'system',
-          content: SYSTEM_PROMPT
-        },
-        {
-          role: 'user',
-          content: userMessage
-        }
-      ],
-      temperature: 0.1, // Low temperature for consistent, focused analysis
-      max_tokens: 2000
-    });
+    // Call OpenAI with timeout protection
+    const completion = await Promise.race([
+      openai.chat.completions.create({
+        model: 'gpt-4o-mini',
+        messages: [
+          {
+            role: 'system',
+            content: SYSTEM_PROMPT
+          },
+          {
+            role: 'user',
+            content: userMessage
+          }
+        ],
+        temperature: 0.1, // Low temperature for consistent, focused analysis
+        max_tokens: 1500
+      }),
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('RFP analysis timeout')), 15000)
+      )
+    ]);
 
     const output = completion.choices[0]?.message?.content;
 
@@ -78,18 +86,33 @@ export default async function handler(req, res) {
     });
 
   } catch (error) {
-    console.error('OpenAI API Error:', error);
+    console.error('RFP Analyzer Error:', error);
+    
+    // Handle timeout specifically
+    if (error.message === 'RFP analysis timeout') {
+      return res.status(408).json({ 
+        error: 'RFP analysis timeout - please try again' 
+      });
+    }
+    
+    // Handle OpenAI rate limits
+    if (error.status === 429) {
+      return res.status(429).json({ 
+        error: 'Rate limit exceeded - please try again in a moment' 
+      });
+    }
     
     // Handle specific OpenAI errors
     if (error.status) {
       return res.status(500).json({ 
-        error: `OpenAI API Error: ${error.message}` 
+        error: `OpenAI API Error (${error.status}): ${error.message}` 
       });
     }
 
     // Handle general errors
     return res.status(500).json({ 
-      error: `Internal server error: ${error.message}` 
+      error: `Internal server error: ${error.message}`,
+      type: error.constructor.name
     });
   }
 } 
