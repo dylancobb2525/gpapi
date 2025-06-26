@@ -4,43 +4,44 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-const SYSTEM_PROMPT = `You are an expert medical education grant writer creating the SECOND HALF of a comprehensive grant proposal. Generate Part 2 to complete the grant proposal with detailed content.
+const SYSTEM_PROMPT = `You are an expert medical education grant writer creating the SECOND HALF of a comprehensive grant proposal. You will build upon Part 1 content to complete a full, cohesive grant proposal.
 
 MANDATORY REQUIREMENTS:
 ✓ Generate Part 2 of grant proposal (1,000-1,300 words)
 ✓ Professional grant proposal formatting with clear section headers
-✓ Use provided context to create evidence-based content
+✓ Reference and build upon the Part 1 content provided for consistency
+✓ Use all provided context to create evidence-based content
 ✓ Comprehensive paragraphs, not bullet points
 
 PART 2 SECTIONS TO INCLUDE:
 
 **OUTCOMES & EVALUATION** (400-500 words)
-- Specific, measurable learning outcomes
+- Specific, measurable learning outcomes aligned with Part 1 objectives
 - Pre/post assessment strategies and tools
 - Data collection and analysis plans
 - Quality improvement metrics and KPIs
 - Success criteria and benchmarks
 
 **TARGET AUDIENCE & RECRUITMENT** (300-400 words)
-- Detailed audience demographics and characteristics
+- Detailed audience demographics consistent with Part 1 needs assessment
 - Recruitment strategies and channels
 - Estimated participation numbers and engagement rates
 - Audience segmentation and targeting approach
 
 **INNOVATION & IMPACT** (200-250 words)
-- Unique educational approaches and methodologies
+- Unique educational approaches building on Part 1 methodology
 - Differentiation from existing programs
 - Expected clinical practice improvements
 - Long-term impact on patient outcomes
 
 **BUDGET JUSTIFICATION** (100-150 words)
-- Budget rationale based on format recommendations
+- Budget rationale based on format recommendations and Part 1 design
 - Cost-effectiveness analysis
 - Resource allocation overview
 
-Generate compelling, professional content for Part 2 that complements Part 1 to create a complete grant proposal.
+Generate compelling, professional content for Part 2 that seamlessly continues from Part 1 to create one complete, cohesive grant proposal.
 
-End with: → Grant Proposal Complete. Next step: Proposal Reviewer. Are you ready to continue?`;
+End with: → Complete Grant Proposal Generated! Next step: Proposal Reviewer. Are you ready to continue?`;
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -49,6 +50,8 @@ export default async function handler(req, res) {
 
   try {
     const { 
+      rfp_summary,
+      clinical_context,
       format_recommendations, 
       custom_notes,
       part1_content
@@ -61,15 +64,25 @@ export default async function handler(req, res) {
       });
     }
 
-    // Build focused user message for Part 2
-    let userMessage = `Format Strategy: ${format_recommendations}`;
-
-    if (custom_notes && typeof custom_notes === 'string' && custom_notes.trim().length > 0) {
-      userMessage += `\n\nAdditional Notes: ${custom_notes}`;
+    if (!part1_content || typeof part1_content !== 'string' || part1_content.trim().length === 0) {
+      return res.status(400).json({ 
+        error: 'Part 1 content is required to generate Part 2' 
+      });
     }
 
-    if (part1_content && typeof part1_content === 'string' && part1_content.trim().length > 0) {
-      userMessage += `\n\nPart 1 Context: ${part1_content.substring(0, 500)}`;
+    // Build comprehensive user message for Part 2 that references Part 1
+    let userMessage = `PART 1 CONTENT (to build upon):\n${part1_content.substring(0, 1000)}\n\nFORMAT STRATEGY: ${format_recommendations}`;
+
+    if (rfp_summary && typeof rfp_summary === 'string' && rfp_summary.trim().length > 0) {
+      userMessage += `\n\nRFP CONTEXT: ${rfp_summary.substring(0, 400)}`;
+    }
+
+    if (clinical_context && typeof clinical_context === 'string' && clinical_context.trim().length > 0) {
+      userMessage += `\n\nCLINICAL CONTEXT: ${clinical_context.substring(0, 500)}`;
+    }
+
+    if (custom_notes && typeof custom_notes === 'string' && custom_notes.trim().length > 0) {
+      userMessage += `\n\nADDITIONAL NOTES: ${custom_notes}`;
     }
 
     // Call OpenAI with timeout protection

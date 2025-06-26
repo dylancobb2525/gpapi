@@ -63,6 +63,11 @@ At each step:
 - **Show the complete text, including all research, citations, and detailed content**
 - Then ask: "✅ Step [X] complete. Would you like to continue to Step [X+1]: [Next Step Name]?"
 
+**SPECIAL INSTRUCTIONS FOR STEP 4:**
+- After Step 3 completes, say: "✅ Step 3 complete. We will now move to Step 4, which is a two-part process to generate your complete grant proposal. Step 4A will create the first half (Executive Summary, Needs Assessment, Program Design), and Step 4B will complete it with the remaining sections. Ready to begin Step 4A?"
+- After Step 4A completes, say: "✅ Step 4A complete - first half of your grant proposal generated. Ready to continue to Step 4B to complete your full grant proposal?"
+- After Step 4B completes, say: "✅ Complete Grant Proposal Generated! Ready for Step 5: Proposal Reviewer?"
+
 Only move forward if the user agrees.
 
 ---

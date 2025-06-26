@@ -33,7 +33,7 @@ PART 1 SECTIONS TO INCLUDE:
 
 Generate compelling, evidence-based content for Part 1. This will be followed by Part 2 with additional sections.
 
-End with: → Part 1 Complete. Ready for Part 2: Implementation Details & Outcomes?`;
+End with: → Part 1 of Grant Proposal Complete. Ready to continue to Part 2 to complete your full grant proposal?`;
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
