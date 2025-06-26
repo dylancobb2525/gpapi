@@ -4,129 +4,110 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-const SYSTEM_PROMPT = `You are a leading medical education specialist tasked with creating comprehensive clinical context and needs assessments for grant proposals. Your output will be used by pharmaceutical companies and medical education organizations to justify funding for continuing medical education programs.
+const SYSTEM_PROMPT = `You are a leading medical education specialist. Create a comprehensive clinical context and needs assessment for grant proposals (1,200-1,800 words).
 
-MANDATORY REQUIREMENTS:
-✓ Generate 1,500-2,500 word comprehensive clinical background
-✓ Include exactly 15-20 peer-reviewed citations from high-impact medical journals
-✓ Cover clinical background, recent advances, practice gaps, and educational needs
-✓ Use proper medical journal citation format: [Author et al. Journal Name. Year;Volume(Issue):Pages]
-✓ Focus on real clinical trials, FDA approvals, and evidence-based medicine
-✓ Address health disparities and population-specific considerations
-✓ Identify specific knowledge gaps requiring educational intervention
+REQUIREMENTS:
+✓ Comprehensive clinical background and current treatment landscape
+✓ Include 12-15 peer-reviewed citations from high-impact journals (NEJM, Lancet, JAMA, JCO)
+✓ Cover recent advances, practice gaps, and educational needs
+✓ Use proper citation format: [Author et al. Journal. Year;Volume:Pages]
+✓ Focus on real trials, FDA approvals, and evidence-based medicine
+✓ Address population-specific considerations and health disparities
 
-CONTENT STRUCTURE:
+STRUCTURE:
 1. Clinical Background & Current Landscape
-2. Recent Medical Advances & Breakthrough Therapies
+2. Recent Advances & Breakthrough Therapies  
 3. Practice Gaps & Educational Needs
-4. Target Audience Considerations
-5. Educational Rationale & Justification
+4. Target Audience & Educational Rationale
 
-CITATION REQUIREMENTS:
-- Minimum 15-20 peer-reviewed sources
-- High-impact journals (NEJM, Lancet, JAMA, JCO, etc.)
-- Recent publications (last 5 years preferred)
-- Include specific trial names, FDA approval dates
-- NO Wikipedia or non-peer-reviewed sources
-
-Generate professional, grant-ready content with comprehensive medical research backing.`;
+Generate professional, grant-ready content with strong medical research backing.`;
 
 export default async function handler(req, res) {
+  const requestId = req.headers['x-request-id'] || Math.random().toString(36).substring(7);
+  const startTime = Date.now();
+  
+  console.log(`[${requestId}] === CLINICAL CONTEXT BUILDER START ===`);
+  console.log(`[${requestId}] Method: ${req.method}`);
+
   if (req.method !== 'POST') {
+    console.log(`[${requestId}] ERROR: Method not allowed - ${req.method}`);
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
     const { therapeutic_area, rfp_summary, meeting_notes, additional_context } = req.body;
 
-    // Validate therapeutic_area field - accept any reasonable medical string
-    if (!therapeutic_area) {
-      return res.status(400).json({ error: 'Therapeutic area field is required' });
-    }
-    
-    if (typeof therapeutic_area !== 'string') {
-      return res.status(400).json({ error: 'Therapeutic area must be a string' });
+    console.log(`[${requestId}] Validating therapeutic_area: "${therapeutic_area}"`);
+
+    if (!therapeutic_area || typeof therapeutic_area !== 'string' || therapeutic_area.trim().length === 0) {
+      console.log(`[${requestId}] ERROR: Invalid therapeutic_area`);
+      return res.status(400).json({ error: 'Therapeutic area is required and must be a non-empty string' });
     }
 
-    // Clean and prepare the therapeutic area input
     const cleanTherapeuticArea = therapeutic_area.trim();
-    
-    // Very permissive validation - just ensure it's not empty after trimming
-    if (cleanTherapeuticArea.length === 0) {
-      return res.status(400).json({ error: 'Therapeutic area cannot be empty' });
-    }
+    console.log(`[${requestId}] Validation passed. Clean therapeutic area: "${cleanTherapeuticArea}"`);
 
-    // Build comprehensive user message
+    // Build user message
     let userMessage = `Create a comprehensive medical education needs assessment for: ${cleanTherapeuticArea}`;
 
-    if (rfp_summary && typeof rfp_summary === 'string' && rfp_summary.trim().length > 0) {
-      userMessage += `\n\nRFP Context: ${rfp_summary}`;
-    }
+    if (rfp_summary) userMessage += `\n\nRFP Context: ${rfp_summary.substring(0, 500)}`;
+    if (meeting_notes) userMessage += `\n\nMeeting Notes: ${meeting_notes.substring(0, 500)}`;
+    if (additional_context) userMessage += `\n\nAdditional Context: ${additional_context.substring(0, 300)}`;
 
-    if (meeting_notes && typeof meeting_notes === 'string' && meeting_notes.trim().length > 0) {
-      userMessage += `\n\nMeeting Notes: ${meeting_notes}`;
-    }
+    console.log(`[${requestId}] User message length: ${userMessage.length} chars`);
+    console.log(`[${requestId}] Starting OpenAI call with GPT-4o-mini`);
 
-    if (additional_context && typeof additional_context === 'string' && additional_context.trim().length > 0) {
-      userMessage += `\n\nAdditional Context: ${additional_context}`;
-    }
-
-    // Call OpenAI with timeout protection
+    // Faster model with shorter timeout
     const completion = await Promise.race([
       openai.chat.completions.create({
-        model: 'gpt-4o',
+        model: 'gpt-4o-mini',
         messages: [
-          {
-            role: 'system',
-            content: SYSTEM_PROMPT
-          },
-          {
-            role: 'user',
-            content: userMessage
-          }
+          { role: 'system', content: SYSTEM_PROMPT },
+          { role: 'user', content: userMessage }
         ],
         temperature: 0.2,
-        max_tokens: 4000
+        max_tokens: 3000
       }),
       new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Clinical context generation timeout')), 25000)
+        setTimeout(() => reject(new Error('Timeout')), 15000)
       )
     ]);
+
+    const processingTime = Date.now() - startTime;
+    console.log(`[${requestId}] OpenAI call completed in ${processingTime}ms`);
 
     const output = completion.choices[0]?.message?.content;
     
     if (!output) {
+      console.log(`[${requestId}] ERROR: No response from OpenAI`);
       throw new Error('No response received from OpenAI');
     }
+
+    console.log(`[${requestId}] Response length: ${output.length} characters`);
+    console.log(`[${requestId}] === SUCCESS - Total time: ${processingTime}ms ===`);
 
     return res.status(200).json({
       output: output.trim() + '\n\n→ Next step: Format Recommender. Are you ready to continue?'
     });
 
   } catch (error) {
-    console.error('Clinical Context Builder Error:', error);
+    const processingTime = Date.now() - startTime;
+    console.error(`[${requestId}] === ERROR after ${processingTime}ms ===`);
+    console.error(`[${requestId}] Error: ${error.message}`);
     
-    if (error.message === 'Clinical context generation timeout') {
+    if (error.message === 'Timeout') {
+      console.log(`[${requestId}] 15-second timeout reached`);
       return res.status(408).json({ 
-        error: 'Clinical context generation timeout - please try again' 
+        error: 'Generation timeout - please try again',
+        requestId: requestId,
+        processingTime: processingTime
       });
     }
     
-    if (error.status === 429) {
-      return res.status(429).json({ 
-        error: 'Rate limit exceeded - please try again in a moment' 
-      });
-    }
-    
-    if (error.status) {
-      return res.status(500).json({ 
-        error: `OpenAI API Error (${error.status}): ${error.message}` 
-      });
-    }
-
     return res.status(500).json({ 
-      error: `Internal server error: ${error.message}`,
-      type: error.constructor.name
+      error: `Error: ${error.message}`,
+      requestId: requestId,
+      processingTime: processingTime
     });
   }
 } 
