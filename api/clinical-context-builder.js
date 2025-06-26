@@ -16,25 +16,25 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Therapeutic area is required' });
     }
 
-    // Ultra-fast minimal call
+    // ULTRA-MINIMAL call - fastest possible
     const completion = await Promise.race([
       openai.chat.completions.create({
         model: 'gpt-4o-mini',
         messages: [
           {
             role: 'system',
-            content: 'Create a medical education needs assessment (800-1000 words) with clinical background, practice gaps, and 8-10 citations for the given therapeutic area.'
+            content: 'Create a brief medical education needs assessment (400-600 words) with clinical background and 5-8 citations.'
           },
           {
             role: 'user',
-            content: `Therapeutic area: ${therapeutic_area.trim()}`
+            content: therapeutic_area.trim()
           }
         ],
-        max_tokens: 1500,
-        temperature: 0.2
+        max_tokens: 800,
+        temperature: 0.1
       }),
       new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Timeout')), 8000)
+        setTimeout(() => reject(new Error('Timeout')), 5000)
       )
     ]);
 
@@ -45,20 +45,20 @@ export default async function handler(req, res) {
     }
 
     return res.status(200).json({
-      output: output.trim() + '\n\n→ Next step: Format Recommender. Ready to continue?'
+      output: output.trim() + '\n\n→ Ready for Step 3: Format Recommender?'
     });
 
   } catch (error) {
-    console.error('API Error:', error);
+    console.error('Error:', error);
     
     if (error.message === 'Timeout') {
       return res.status(408).json({ 
-        error: 'Request timeout - please try again' 
+        error: 'Timeout - please retry' 
       });
     }
     
     return res.status(500).json({ 
-      error: `Error: ${error.message}`
+      error: error.message || 'Server error'
     });
   }
 } 
