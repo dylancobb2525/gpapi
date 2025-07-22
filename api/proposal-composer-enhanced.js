@@ -4,54 +4,55 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-const SYSTEM_PROMPT = `You are an expert medical education grant writer creating COMPREHENSIVE grant proposals for independent medical education funding. Generate complete, detailed grant proposal content optimized for timely delivery.
+const SYSTEM_PROMPT = `You are an expert medical education grant writer creating COMPREHENSIVE grant proposal sections. Generate complete, detailed grant proposal content optimized for timely delivery.
 
 MANDATORY REQUIREMENTS:
-✓ Generate a COMPLETE grant proposal (2,000-3,000 words - comprehensive yet efficient)
-✓ Include ALL major sections with substantial detail
-✓ Use the clinical research and context provided to create evidence-based content
+✓ Generate complete grant proposal sections (1,500-2,000 words total)
+✓ Include ALL requested sections with substantial detail
+✓ Use the summarized clinical research and context provided
 ✓ Professional grant proposal formatting with clear section headers
 ✓ Comprehensive paragraphs, not bullet points or brief summaries
+✓ Stay within token limits while maintaining quality
 
-REQUIRED SECTIONS TO INCLUDE:
+REQUIRED SECTIONS TO INCLUDE (based on sections_requested):
 
-**EXECUTIVE SUMMARY** (350-400 words)
+**EXECUTIVE SUMMARY** (300-350 words)
 - Project overview, target audience, educational approach, anticipated outcomes
 - Key statistics and compelling rationale for funding
 
-**NEEDS ASSESSMENT** (600-700 words)
+**NEEDS ASSESSMENT** (400-500 words)
 - Clinical background from provided context
 - Specific educational gaps and barriers identified
 - Evidence-based justification with key citations
 - Target audience needs analysis
 
-**PROGRAM DESIGN & METHODOLOGY** (600-700 words)
+**PROGRAM DESIGN & METHODOLOGY** (400-500 words)
 - Educational format implementation
 - Learning objectives and curriculum design
 - Delivery methods and timeline
 - Faculty requirements and expertise
 
-**OUTCOMES & EVALUATION** (400-500 words)
+**OUTCOMES & EVALUATION** (300-400 words)
 - Specific, measurable learning outcomes
 - Pre/post assessment strategies
 - Data collection and analysis plans
 - Quality improvement metrics
 
-**TARGET AUDIENCE & RECRUITMENT** (300-400 words)
+**TARGET AUDIENCE & RECRUITMENT** (200-300 words)
 - Audience demographics and characteristics
 - Recruitment strategies and channels
 - Estimated participation numbers
 
-**INNOVATION & IMPACT** (250-300 words)
+**INNOVATION & IMPACT** (150-200 words)
 - Unique educational approaches
 - Differentiation from existing programs
 - Expected clinical practice improvements
 
-**BUDGET JUSTIFICATION** (150-200 words)
+**BUDGET JUSTIFICATION** (100-150 words)
 - Budget rationale based on format recommendations
 - Cost-effectiveness analysis
 
-Generate a complete, professional grant proposal suitable for submission to medical education funders. Use all provided clinical context and research to create compelling, evidence-based content.
+Generate a complete, professional grant proposal suitable for submission to medical education funders. Use all provided summarized context to create compelling, evidence-based content.
 
 End the response with:
 
@@ -69,7 +70,8 @@ export default async function handler(req, res) {
       clinical_context, 
       format_recommendations, 
       custom_notes, 
-      sections_requested 
+      sections_requested,
+      use_summarization = true
     } = req.body;
 
     // Validate required fields
@@ -97,11 +99,52 @@ export default async function handler(req, res) {
       });
     }
 
-    // Build user message with summarized context to prevent token overflow
-    let userMessage = `RFP Summary: ${rfp_summary.substring(0, 800)}\n\nClinical Context: ${clinical_context.substring(0, 1000)}\n\nFormat Recommendations: ${format_recommendations.substring(0, 600)}\n\nSections Requested: ${sections_requested.join(', ')}`;
+    let processedRfpSummary = rfp_summary;
+    let processedClinicalContext = clinical_context;
+    let processedFormatRecommendations = format_recommendations;
+
+    // Use summarization if enabled and content is long
+    if (use_summarization && (rfp_summary.length > 800 || clinical_context.length > 1000 || format_recommendations.length > 600)) {
+      try {
+        // Call the summarization endpoint
+        const summaryResponse = await fetch(`${req.headers.host ? `https://${req.headers.host}` : 'http://localhost:3000'}/api/content-summarizer`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            rfp_analysis: rfp_summary,
+            clinical_context: clinical_context,
+            format_recommendations: format_recommendations,
+            content_type: 'proposal_input'
+          })
+        });
+
+        if (summaryResponse.ok) {
+          const summaryData = await summaryResponse.json();
+          processedRfpSummary = summaryData.output.substring(0, 600);
+          processedClinicalContext = summaryData.output.substring(0, 800);
+          processedFormatRecommendations = summaryData.output.substring(0, 500);
+        }
+      } catch (summaryError) {
+        console.warn('Summarization failed, using original content:', summaryError);
+        // Fall back to truncated original content
+        processedRfpSummary = rfp_summary.substring(0, 600);
+        processedClinicalContext = clinical_context.substring(0, 800);
+        processedFormatRecommendations = format_recommendations.substring(0, 500);
+      }
+    } else {
+      // Apply strict truncation if summarization is disabled
+      processedRfpSummary = rfp_summary.substring(0, 600);
+      processedClinicalContext = clinical_context.substring(0, 800);
+      processedFormatRecommendations = format_recommendations.substring(0, 500);
+    }
+
+    // Build user message with processed context
+    let userMessage = `RFP Summary: ${processedRfpSummary}\n\nClinical Context: ${processedClinicalContext}\n\nFormat Recommendations: ${processedFormatRecommendations}\n\nSections Requested: ${sections_requested.join(', ')}`;
 
     if (custom_notes && typeof custom_notes === 'string' && custom_notes.trim().length > 0) {
-      userMessage += `\n\nCustom Notes: ${custom_notes.substring(0, 300)}`;
+      userMessage += `\n\nCustom Notes: ${custom_notes.substring(0, 200)}`;
     }
 
     // Call OpenAI with timeout protection
@@ -119,7 +162,7 @@ export default async function handler(req, res) {
           }
         ],
         temperature: 0.1, // Low temperature for professional, consistent proposal writing
-        max_tokens: 3500  // Reduced for better reliability and to prevent token overflow
+        max_tokens: 3000  // Optimized for reliability and to prevent token overflow
       }),
       new Promise((_, reject) => 
         setTimeout(() => reject(new Error('Proposal generation timeout')), 25000)
@@ -138,7 +181,7 @@ export default async function handler(req, res) {
     });
 
   } catch (error) {
-    console.error('Proposal Composer Error:', error);
+    console.error('Enhanced Proposal Composer Error:', error);
     
     // Handle timeout specifically
     if (error.message === 'Proposal generation timeout') {

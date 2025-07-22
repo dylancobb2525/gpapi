@@ -32,29 +32,54 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { proposal_text, rfp_context, section_name } = req.body;
+    const { proposal_text, rfp_context, section_name, proposal_content } = req.body;
+
+    // Enhanced validation with multiple field support
+    let actualProposalText = proposal_text;
+    
+    // Check multiple possible field names
+    if (!actualProposalText && proposal_content) {
+      actualProposalText = proposal_content;
+    }
+    
+    // If still no text, check if it's in a nested object
+    if (!actualProposalText && req.body.proposal && req.body.proposal.text) {
+      actualProposalText = req.body.proposal.text;
+    }
 
     // Validate required fields with detailed error messages
-    if (!proposal_text) {
+    if (!actualProposalText) {
       return res.status(400).json({ 
-        error: 'Proposal text field is required but was not provided' 
+        error: 'Proposal text field is required but was not provided. Please ensure the proposal content is included in the request.',
+        received_fields: Object.keys(req.body),
+        suggestion: 'Try using "proposal_text" or "proposal_content" as the field name'
       });
     }
     
-    if (typeof proposal_text !== 'string') {
+    if (typeof actualProposalText !== 'string') {
       return res.status(400).json({ 
-        error: `Proposal text must be a string, but received: ${typeof proposal_text}` 
+        error: `Proposal text must be a string, but received: ${typeof actualProposalText}`,
+        received_value: actualProposalText
       });
     }
     
-    if (proposal_text.trim().length === 0) {
+    if (actualProposalText.trim().length === 0) {
       return res.status(400).json({ 
-        error: 'Proposal text field is required and must be a non-empty string (received empty or whitespace-only text)' 
+        error: 'Proposal text field is required and must be a non-empty string (received empty or whitespace-only text)',
+        text_length: actualProposalText.length,
+        trimmed_length: actualProposalText.trim().length
       });
     }
 
+    // Log for debugging (remove in production)
+    console.log('Proposal review request received:', {
+      text_length: actualProposalText.length,
+      has_rfp_context: !!rfp_context,
+      has_section_name: !!section_name
+    });
+
     // Build user message with proposal text and optional context
-    let userMessage = `Proposal Text to Review:\n\n${proposal_text}`;
+    let userMessage = `Proposal Text to Review:\n\n${actualProposalText}`;
 
     if (rfp_context && typeof rfp_context === 'string' && rfp_context.trim().length > 0) {
       userMessage += `\n\nRFP Context: ${rfp_context}`;
@@ -97,7 +122,7 @@ export default async function handler(req, res) {
     });
 
   } catch (error) {
-    console.error('Proposal Reviewer Error:', error);
+    console.error('Enhanced Proposal Reviewer Error:', error);
     
     if (error.message === 'Proposal review timeout') {
       return res.status(408).json({ 

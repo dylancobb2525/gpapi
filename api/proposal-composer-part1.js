@@ -67,17 +67,17 @@ export default async function handler(req, res) {
       });
     }
 
-    // Build comprehensive user message for Part 1
-    let userMessage = `RFP Summary: ${rfp_summary.substring(0, 1000)}\n\nClinical Context: ${clinical_context.substring(0, 1500)}\n\nFormat Strategy: ${format_recommendations.substring(0, 800)}`;
+    // Build comprehensive user message for Part 1 with strict token limits
+    let userMessage = `RFP Summary: ${rfp_summary.substring(0, 600)}\n\nClinical Context: ${clinical_context.substring(0, 800)}\n\nFormat Strategy: ${format_recommendations.substring(0, 500)}`;
 
     if (custom_notes && typeof custom_notes === 'string' && custom_notes.trim().length > 0) {
-      userMessage += `\n\nCustom Notes: ${custom_notes.substring(0, 400)}`;
+      userMessage += `\n\nCustom Notes: ${custom_notes.substring(0, 200)}`;
     }
 
     // Call OpenAI with timeout protection
     const completion = await Promise.race([
       openai.chat.completions.create({
-        model: 'gpt-4o',
+        model: 'gpt-4o-mini',
         messages: [
           {
             role: 'system',
@@ -89,10 +89,10 @@ export default async function handler(req, res) {
           }
         ],
         temperature: 0.1,
-        max_tokens: 3500
+        max_tokens: 2500
       }),
       new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Part 1 generation timeout')), 25000)
+        setTimeout(() => reject(new Error('Part 1 generation timeout')), 15000)
       )
     ]);
 

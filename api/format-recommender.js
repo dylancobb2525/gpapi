@@ -69,7 +69,7 @@ export default async function handler(req, res) {
     // Call OpenAI with timeout protection
     const completion = await Promise.race([
       openai.chat.completions.create({
-        model: 'gpt-4o',
+        model: 'gpt-4o-mini',
         messages: [
           {
             role: 'system',

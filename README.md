@@ -10,8 +10,14 @@ This serverless API system provides specialized endpoints for medical education 
 - **Step 1**: RFP Analyzer - Analyzes RFPs and meeting notes 
 - **Step 2**: Clinical Context Builder - Builds clinical justification and context
 - **Step 3**: Format Recommender - Recommends GLC-branded educational formats
-- **Step 4**: Proposal Composer - Writes formal grant proposal sections
+- **Step 4A**: Proposal Composer Part 1 - Writes first half of grant proposal
+- **Step 4B**: Proposal Composer Part 2 - Completes grant proposal
 - **Step 5**: Proposal Reviewer - Simulates funder review and provides feedback
+
+**NEW: Token Overflow Prevention System**
+- **Content Summarizer** - Condenses previous outputs to prevent token limits
+- **Proposal Outline Generator** - Creates structured outlines before detailed writing
+- **Enhanced Proposal Composer** - Automatically uses summarization layer
 
 ## Deployment
 
@@ -72,10 +78,21 @@ curl -X POST https://your-vercel-app.vercel.app/api/rfp-analyzer \
 }
 ```
 
+**Enhanced Features**:
+- **15-20 peer-reviewed citations** (increased from 8-12)
+- **Full URLs/DOIs** for all citations with clickable links
+- **Recent research focus** (within last 5 years when possible)
+- **Comprehensive content** (1500-2000 words vs 1000-1500)
+- **High-impact sources** including guidelines, systematic reviews, and clinical trials
+
+**Citation Format**:
+- [Author et al. (Year) - Title](URL/DOI)
+- Example: [Smith et al. (2023) - Clinical Management of Cardiovascular Disease](https://doi.org/10.1000/example)
+
 **Response**:
 ```json
 {
-  "output": "[clinical context and justification from GPT-4]"
+  "output": "[comprehensive clinical context with 15-20 linked citations from GPT-4]"
 }
 ```
 
@@ -124,9 +141,63 @@ curl -X POST https://your-vercel-app.vercel.app/api/format-recommender \
   }'
 ```
 
-### Step 4: Proposal Composer
+### Step 4A: Proposal Composer Part 1
 
-**Endpoint**: `POST /api/proposal-composer`
+**Endpoint**: `POST /api/proposal-composer-part1`
+
+**Request Body**:
+```json
+{
+  "rfp_summary": "string (required) – summary from RFP analysis",
+  "clinical_context": "string (required) – clinical background and justification",
+  "format_recommendations": "string (required) – recommended educational formats",
+  "custom_notes": "string (optional) – additional custom instructions"
+}
+```
+
+**Generates**:
+- Executive Summary (350-400 words)
+- Needs Assessment (600-700 words)
+- Program Design & Methodology (300-400 words)
+
+**Response**:
+```json
+{
+  "output": "[Part 1 of grant proposal from GPT-4]"
+}
+```
+
+### Step 4B: Proposal Composer Part 2
+
+**Endpoint**: `POST /api/proposal-composer-part2`
+
+**Request Body**:
+```json
+{
+  "format_recommendations": "string (required) – recommended educational formats",
+  "part1_content": "string (required) – content from Part 1",
+  "rfp_summary": "string (optional) – RFP context",
+  "clinical_context": "string (optional) – clinical background",
+  "custom_notes": "string (optional) – additional notes"
+}
+```
+
+**Generates**:
+- Outcomes & Evaluation (400-500 words)
+- Target Audience & Recruitment (300-400 words)
+- Innovation & Impact (200-250 words)
+- Budget Justification (100-150 words)
+
+**Response**:
+```json
+{
+  "output": "[Part 2 of grant proposal from GPT-4]"
+}
+```
+
+### Enhanced Proposal Composer (Alternative)
+
+**Endpoint**: `POST /api/proposal-composer-enhanced`
 
 **Request Body**:
 ```json
@@ -135,41 +206,61 @@ curl -X POST https://your-vercel-app.vercel.app/api/format-recommender \
   "clinical_context": "string (required) – clinical background and justification",
   "format_recommendations": "string (required) – recommended educational formats",
   "custom_notes": "string (optional) – additional custom instructions",
-  "sections_requested": ["array of strings (required) – proposal sections to generate"]
+  "sections_requested": ["array of strings (required) – proposal sections to generate"],
+  "use_summarization": "boolean (optional) – default true, enables automatic summarization"
 }
 ```
 
-**Available Sections**:
-- Executive Summary
-- Needs Assessment / Gaps / Barriers
-- Design & Methods
-- Outcomes / Evaluation
-- Target Audience & Recruitment
-- Innovation / Differentiation
-- Faculty (optional)
+**Features**:
+- Automatic content summarization to prevent token overflow
+- Configurable summarization on/off
+- Optimized for reliability and consistency
+
+### Content Summarizer
+
+**Endpoint**: `POST /api/content-summarizer`
+
+**Request Body**:
+```json
+{
+  "rfp_analysis": "string (optional) – RFP analysis to summarize",
+  "clinical_context": "string (optional) – clinical context to summarize",
+  "format_recommendations": "string (optional) – format recommendations to summarize",
+  "content_type": "string (optional) – type of content being summarized"
+}
+```
 
 **Response**:
 ```json
 {
-  "output": "[formal proposal sections from GPT-4]"
+  "output": "[condensed summary preserving all critical information]"
 }
 ```
 
-**Example**:
-```bash
-curl -X POST https://your-vercel-app.vercel.app/api/proposal-composer \
-  -H "Content-Type: application/json" \
-  -d '{
-    "rfp_summary": "Focus on cardiovascular education for post-launch product...",
-    "clinical_context": "Recent guidelines show gaps in post-MI management...",
-    "format_recommendations": "DecisionSim™ and Expert Interview formats recommended...",
-    "sections_requested": ["Executive Summary", "Needs Assessment / Gaps / Barriers", "Design & Methods"]
-  }'
+### Proposal Outline Generator
+
+**Endpoint**: `POST /api/proposal-outline-generator`
+
+**Request Body**:
+```json
+{
+  "rfp_summary": "string (required) – summary from RFP analysis",
+  "clinical_context": "string (required) – clinical background and justification",
+  "format_recommendations": "string (required) – recommended educational formats",
+  "custom_notes": "string (optional) – additional custom instructions"
+}
+```
+
+**Response**:
+```json
+{
+  "output": "[structured proposal outline with all major sections]"
+}
 ```
 
 ### Step 5: Proposal Reviewer
 
-**Endpoint**: `POST /api/proposal-reviewer`
+**Endpoint**: `POST /api/proposal-reviewer` or `POST /api/proposal-reviewer-enhanced`
 
 **Request Body**:
 ```json
@@ -179,6 +270,12 @@ curl -X POST https://your-vercel-app.vercel.app/api/proposal-composer \
   "section_name": "string (optional) – specific section being reviewed"
 }
 ```
+
+**Enhanced Features**:
+- **Multiple field support**: Accepts `proposal_text`, `proposal_content`, or nested objects
+- **Better error handling**: Detailed error messages for debugging
+- **Enhanced validation**: Checks for empty strings and invalid types
+- **Debugging support**: Logs request details for troubleshooting
 
 **Review Includes**:
 - Scored evaluation (1-5 scale) for 5 key criteria
@@ -196,7 +293,7 @@ curl -X POST https://your-vercel-app.vercel.app/api/proposal-composer \
 
 **Example**:
 ```bash
-curl -X POST https://your-vercel-app.vercel.app/api/proposal-reviewer \
+curl -X POST https://your-vercel-app.vercel.app/api/proposal-reviewer-enhanced \
   -H "Content-Type: application/json" \
   -d '{
     "proposal_text": "Executive Summary: This proposal aims to address critical gaps in cardiovascular care...",
@@ -209,6 +306,31 @@ curl -X POST https://your-vercel-app.vercel.app/api/proposal-reviewer \
 - `400`: Missing or invalid required fields
 - `405`: Method not allowed (only POST supported)
 - `500`: OpenAI API error or internal server error
+
+## Token Overflow Prevention
+
+This API includes several mechanisms to prevent token limit issues that commonly occur in multi-step grant proposal development:
+
+### 1. Content Summarization
+- **Automatic summarization** of previous step outputs before passing to proposal composers
+- **Preserves all critical information** while reducing length by 70-80%
+- **Configurable** - can be enabled/disabled per request
+
+### 2. Structured Approach
+- **Part 1/Part 2 proposal generation** - splits large proposals into manageable chunks
+- **Outline-first approach** - generates structured outlines before detailed content
+- **Strict token limits** - enforced at each step to prevent overflow
+
+### 3. Enhanced Endpoints
+- **Enhanced Proposal Composer** - automatically handles summarization
+- **Content Summarizer** - standalone summarization service
+- **Proposal Outline Generator** - creates structured outlines
+
+### 4. Best Practices
+- Use the **Part 1/Part 2 approach** for large proposals
+- Enable **automatic summarization** for complex projects
+- Generate **outlines first** for better structure
+- Monitor **token usage** in your requests
 
 ## Development
 

@@ -70,25 +70,25 @@ export default async function handler(req, res) {
       });
     }
 
-    // Build comprehensive user message for Part 2 that references Part 1
-    let userMessage = `PART 1 CONTENT (to build upon):\n${part1_content.substring(0, 1200)}\n\nFORMAT STRATEGY: ${format_recommendations.substring(0, 800)}`;
+    // Build comprehensive user message for Part 2 that references Part 1 with strict token limits
+    let userMessage = `PART 1 CONTENT (to build upon):\n${part1_content.substring(0, 800)}\n\nFORMAT STRATEGY: ${format_recommendations.substring(0, 500)}`;
 
     if (rfp_summary && typeof rfp_summary === 'string' && rfp_summary.trim().length > 0) {
-      userMessage += `\n\nRFP CONTEXT: ${rfp_summary.substring(0, 600)}`;
+      userMessage += `\n\nRFP CONTEXT: ${rfp_summary.substring(0, 400)}`;
     }
 
     if (clinical_context && typeof clinical_context === 'string' && clinical_context.trim().length > 0) {
-      userMessage += `\n\nCLINICAL CONTEXT: ${clinical_context.substring(0, 800)}`;
+      userMessage += `\n\nCLINICAL CONTEXT: ${clinical_context.substring(0, 500)}`;
     }
 
     if (custom_notes && typeof custom_notes === 'string' && custom_notes.trim().length > 0) {
-      userMessage += `\n\nADDITIONAL NOTES: ${custom_notes.substring(0, 300)}`;
+      userMessage += `\n\nADDITIONAL NOTES: ${custom_notes.substring(0, 200)}`;
     }
 
     // Call OpenAI with timeout protection
     const completion = await Promise.race([
       openai.chat.completions.create({
-        model: 'gpt-4o',
+        model: 'gpt-4o-mini',
         messages: [
           {
             role: 'system',
@@ -100,10 +100,10 @@ export default async function handler(req, res) {
           }
         ],
         temperature: 0.1,
-        max_tokens: 3000
+        max_tokens: 2000
       }),
       new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Part 2 generation timeout')), 20000)
+        setTimeout(() => reject(new Error('Part 2 generation timeout')), 15000)
       )
     ]);
 
