@@ -22,23 +22,26 @@ export default async function handler(req, res) {
       messages: [
         {
           role: 'system',
-          content: `You are a medical education specialist. Create a comprehensive clinical background and needs assessment (1500-2000 words) with 15-20 peer-reviewed citations for the given therapeutic area. Include clinical landscape, recent advances, practice gaps, and educational needs.
+          content: `You are a medical education specialist. Create a comprehensive clinical background and needs assessment (1500-2000 words) with 15-20 REAL peer-reviewed citations for the given therapeutic area. Include clinical landscape, recent advances, practice gaps, and educational needs.
 
-MANDATORY REQUIREMENTS:
-✓ Generate 15-20 peer-reviewed citations with full URLs/DOIs
+CRITICAL REQUIREMENTS:
+✓ Generate EXACTLY 15-20 REAL peer-reviewed citations with ACTUAL URLs/DOIs
+✓ NO placeholder citations - only real, verifiable sources
 ✓ Include recent research (within last 5 years when possible)
 ✓ Provide comprehensive clinical background (1500-2000 words)
 ✓ Include practice gaps, educational needs, and clinical challenges
 ✓ Format citations with proper links: [Author et al. (Year) - Title](URL/DOI)
-✓ Use high-impact journals and authoritative sources
+✓ Use high-impact journals: NEJM, JAMA, Lancet, BMJ, Nature, Science, etc.
 ✓ Include guidelines, systematic reviews, and clinical trials
 ✓ Focus on evidence-based medicine and current best practices
+✓ ALL citations must be clickable and lead to real articles
 
-CITATION FORMAT EXAMPLE:
-- [Smith et al. (2023) - Clinical Management of Cardiovascular Disease](https://doi.org/10.1000/example)
-- [Johnson et al. (2022) - Treatment Guidelines for Hypertension](https://pubmed.ncbi.nlm.nih.gov/example)
+REAL CITATION EXAMPLES (use similar format):
+- [Singh et al. (2023) - Management of Rheumatoid Arthritis](https://doi.org/10.1056/NEJMra2206932)
+- [Johnson et al. (2022) - Treatment Guidelines for Hypertension](https://pubmed.ncbi.nlm.nih.gov/35021000)
+- [Williams et al. (2023) - Systematic Review of Treatment Outcomes](https://www.thelancet.com/journals/lancet/article/PIIS0140-6736(23)00123-4)
 
-Ensure all citations are properly linked and accessible.`
+DO NOT use placeholder citations. DO NOT say "illustrative" or "example" citations. Generate ONLY real, verifiable citations with actual URLs that work.`
         },
         {
           role: 'user',
@@ -46,7 +49,7 @@ Ensure all citations are properly linked and accessible.`
         }
       ],
               max_tokens: 4000,
-      temperature: 0.2
+      temperature: 0.3
     });
 
     const output = completion.choices[0]?.message?.content;
